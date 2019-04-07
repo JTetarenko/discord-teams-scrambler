@@ -12,7 +12,7 @@ dotenv.config();
 client.login(process.env.CLIENT_TOKEN);
 
 client.on('message', msg => {
-  if (msg.content.startsWith("!ps")) {
+  if (msg.mentions.users.first() && msg.mentions.users.first().id === process.env.BOT_ID) {
     // Instantly delete bot command
     msg.delete();
 
@@ -23,7 +23,8 @@ client.on('message', msg => {
     const adminRole = msg.member.roles.find(role => role.name === process.env.ADMIN_ROLE_NAME);
 
     // Commands
-    switch(msg.content.replace(/!ps /, '')) {
+    let regex = new RegExp("<@" + process.env.BOT_ID + "> ");
+    switch(msg.content.replace(regex, '')) {
       case "scramble": {
         if (adminRole && msg.member.roles.has(adminRole.id)) {
           let members = teamAChannel.members.array().concat(teamBChannel.members.array());
@@ -45,7 +46,7 @@ client.on('message', msg => {
       case "help": {
         msg.author.send(new Discord.RichEmbed()
           .setTitle("Commands list")
-          .setDescription("`!ps scramble` - scramble members who are in \"team A\" and \"team B\" voice channels (\"pre game\" is optional)")
+          .setDescription("`scramble` - scramble members who are in \"team A\" and \"team B\" voice channels (\"pre game\" is optional)")
           .setFooter("Developed specially for pecinja.lv community <3"));
         break;
       }
