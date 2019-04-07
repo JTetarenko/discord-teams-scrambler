@@ -1,4 +1,4 @@
-# Discord Players Scrambler
+# Discord Teams Scrambler
 
 Discord bot, who scramble members in voice channels. Support only 2 teams.
 
