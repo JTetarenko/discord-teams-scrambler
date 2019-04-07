@@ -1,0 +1,12 @@
+{
+  "name": "dc-players-scrambler",
+  "version": "1.0.0",
+  "description": "",
+  "author": "Hawkk2e",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.4.2",
+    "dotenv": "^7.0.0",
+    "shuffle-array": "^1.0.1"
+  }
+}
