@@ -52,7 +52,7 @@ module.exports = {
     },
     mm: {
       time: 60 * 1000,
-      cfg: "gamemode_competitive5v5.cfg",
+      cfg: "gamemode_competitive.cfg",
       gameMode: 1,
       maps: [
         {
