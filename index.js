@@ -88,6 +88,7 @@ client.on('message', msg => {
 
           msg.channel.send({embed})
             .then(async function (message) {
+              // Add reactions to message
               let reactionArray = {};
               for(let i = 0; i < configuration.modes[mode].maps.length; i++) {
                 reactionArray[i] = await message.react(emojiList[i]);
@@ -102,7 +103,7 @@ client.on('message', msg => {
                       reactionCountsArray[i] = message.reactions.get(emojiList[i]).count - 1;
                     }
 
-                    // Find winner(s)
+                    // Find winner
                     let max = {
                       key: 0,
                       value: reactionCountsArray[0]
@@ -132,6 +133,7 @@ client.on('message', msg => {
 
                     message.edit("", embed);
 
+                    // Setup CS server
                     const password = "p3cinj4";//randomstring.generate(7);
 
                     rcon.connect().then(() => {
