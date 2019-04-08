@@ -2,6 +2,14 @@ const dotenv = require('dotenv');
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const Shuffle = require('shuffle-array');
+const Rcon = require('srcds-rcon');
+const randomstring = require("randomstring");
+const configuration = require("./configuration");
+
+const rcon = Rcon({
+  address: process.env.SERVER_ADDRESS,
+  password: process.env.SERVER_RCON_PASSWORD
+});
 
 client.on('ready', () => {
   console.log(`Let's go!`);
@@ -62,70 +70,26 @@ client.on('message', msg => {
 
       case "vote map": {
         if (adminRole && msg.member.roles.has(adminRole.id)) {
-          // REFACTOR THIS SHIT!!
           const emojiList = ['1⃣','2⃣','3⃣','4⃣','5⃣','6⃣','7⃣','8⃣','9⃣','🔟'];
-          const optionsList = [
-            'Vertigo', 'Inferno', 'Overpass', 'Cobblestone', 'Train', 'Nuke', 'Cache', 'Subzero', 'Mirage', 'Dust2'
-          ];
-          const mapImageList = [
-            "https://i.imgur.com/pbzftZQ.jpg",
-            "https://i.imgur.com/eF6VV4z.jpg",
-            "https://i.imgur.com/trZ5kHh.jpg",
-            "https://i.imgur.com/zX65Jd1.jpg",
-            "https://i.imgur.com/eY9o5Yd.jpg",
-            "https://i.imgur.com/SbPt7xJ.jpg",
-            "https://i.imgur.com/v0qSZJS.jpg",
-            "https://i.imgur.com/XYODUyS.jpg",
-            "https://i.imgur.com/pkkDbAh.jpg",
-            "https://i.imgur.com/6B5WONK.jpg"
-          ];
-          const maps = {
-            mm: {
-              time: 30 * 1000,
-              count: 8,
-              text: `
-                '1⃣' - Vertigo
-                '2⃣' - Inferno
-                '3⃣' - Overpass
-                '4⃣' - Cobblestone
-                '5⃣' - Train
-                '6⃣' - Nuke
-                '7⃣' - Cache
-                '8⃣' - Subzero
-                '9⃣' - Mirage
-              `
-            },
-            wingman: {
-              time: 60 * 1000,
-              count: 10,
-              text: `
-                '1⃣' - Vertigo
-                '2⃣' - Inferno
-                '3⃣' - Overpass
-                '4⃣' - Cobblestone
-                '5⃣' - Train
-                '6⃣' - Nuke
-                '7⃣' - Cache
-                '8⃣' - Subzero
-                '9⃣' - Mirage
-                '🔟' - Dust2
-              `
-            }
-          }
 
-          const mode = preGameChannel.members.array().length > 6 ? "wingman" : "mm";
+          const mode = preGameChannel.members.array().length > 6 ? "mm" : "wingman";
+
+          let description = "";
+          configuration.modes[mode].maps.forEach((map, key) => {
+            description += `${emojiList[key]} - ${map.name}\n`;
+          });
 
           let embed = new Discord.RichEmbed()
             .setTitle("Vote for the map")
-            .setDescription(maps[mode].text)
+            .setDescription(description)
             .setColor(0x008000)
-            .setFooter(`Voting time is ${maps[mode].time / 1000} seconds`)
+            .setFooter(`Voting time is ${configuration.modes[mode].time / 1000} seconds`)
             .setTimestamp();
 
           msg.channel.send({embed})
             .then(async function (message) {
               let reactionArray = {};
-              for(let i = 0; i <= maps[mode].count; i++) {
+              for(let i = 0; i < configuration.modes[mode].maps.length; i++) {
                 reactionArray[i] = await message.react(emojiList[i]);
               }
 
@@ -134,7 +98,7 @@ client.on('message', msg => {
                 message.channel.fetchMessage(message.id)
                   .then(async function (message) {
                     let reactionCountsArray = [];
-                    for (let i = 0; i < maps[mode].count; i++) {
+                    for (let i = 0; i < configuration.modes[mode].maps.length; i++) {
                       reactionCountsArray[i] = message.reactions.get(emojiList[i]).count - 1;
                     }
 
@@ -159,26 +123,47 @@ client.on('message', msg => {
                       }
                     }
 
-                    let winnersText = "";
-                    let winnerImg = "";
-                    if (reactionCountsArray[winners[0].key] === 0) {
-                      winnersText = "No one voted!"
-                    } else {
-                      const winner = winners.length > 1 ? winners[Math.floor(Math.random() * winners.length)] : winners[0];
-                      winnersText +=
-                        emojiList[winner.key] + " " + optionsList[winner.key] +
-                        " (" + winner.value + " vote(s))\n";
-                      winnerImg = mapImageList[winner.key];
-                    }
+                    const winner = winners.length > 1 ? winners[Math.floor(Math.random() * winners.length)] : winners[0];
 
-                    embed.setImage(winnerImg);
+                    embed.setImage(configuration.modes[mode].maps[winner.key].img);
                     embed.setColor(0xFF0000);
-                    embed.addField("**Winner:**", winnersText);
+                    embed.addField("**Winner:**", `${emojiList[winner.key]} ${configuration.modes[mode].maps[winner.key].name} (${winner.value} vote(s))`);
                     embed.setTimestamp();
 
                     message.edit("", embed);
+
+                    const password = "p3cinj4";//randomstring.generate(7);
+
+                    rcon.connect().then(() => {
+                      return rcon.command(`sv_password "${password}"`).then(() => console.log(`Password changed to ${password}`));
+                    }).then(
+                      () => rcon.command(`exec ${configuration.modes[mode].cfg}`).then(() => console.log("Config executed"))
+                    ).then(
+                      () => rcon.command(`game_mode ${configuration.modes[mode].gameMode}`).then(() => console.log("Changed game mode"))
+                    ).then(
+                      () => rcon.command("mp_restartgame 1").then(() => console.log("Round restarted"))
+                    ).then(
+                      () => rcon.command(`map ${configuration.modes[mode].maps[winner.key].id}`)
+                    ).catch(
+                      err => {
+                        rcon.disconnect();
+                      }
+                    );
+
+                    preGameChannel.members.forEach((member) => {
+                      member.send(new Discord.RichEmbed()
+                        .setTitle("Pecinja.lv Friendly Scrim is ready")
+                        .setDescription(`
+                        ==============================================
+                        
+                        \`connect ${process.env.SERVER_ADDRESS};password ${password};\`
+                        
+                        ==============================================
+                        `)
+                        .setFooter("Copy this in console"));
+                    });
                   });
-              }, maps[mode].time);
+              }, configuration.modes[mode].time);
             })
             .catch(console.error);
 
@@ -186,12 +171,13 @@ client.on('message', msg => {
         break;
       }
 
-      // TODO: Write about new commands
       case "help": {
         msg.author.send(new Discord.RichEmbed()
           .setTitle("Commands list")
           .setDescription(`
             \`scramble\` - scramble members who are in "${process.env.TEAM_A_NAME}", "${process.env.TEAM_B_NAME}" and "${process.env.PRE_GAME_CHANNEL_NAME}" voice channels"
+            
+            \`vote map\` - execute map voting based on how much members are in lobby
             
             \`back to lobby\` - move members to "${process.env.PRE_GAME_CHANNEL_NAME}" voice channel from "${process.env.TEAM_A_NAME}" and "${process.env.TEAM_B_NAME}"
           `)
