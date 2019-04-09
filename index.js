@@ -139,13 +139,11 @@ client.on('message', msg => {
                     rcon.connect().then(() => {
                       return rcon.command(`sv_password "${password}"`).then(() => console.log(`Password changed to ${password}`));
                     }).then(
-                      () => rcon.command(`exec ${configuration.modes[mode].cfg}`).then(() => console.log("Config executed"))
-                    ).then(
                       () => rcon.command(`game_mode ${configuration.modes[mode].gameMode}`).then(() => console.log("Changed game mode"))
                     ).then(
-                      () => rcon.command("mp_restartgame 1").then(() => console.log("Round restarted"))
+                      () => rcon.command(`exec ${configuration.modes[mode].cfg}`).then(() => console.log("Config executed"))
                     ).then(
-                      () => rcon.command(`map ${configuration.modes[mode].maps[winner.key].id}`)
+                      () => rcon.command(`changelevel ${configuration.modes[mode].maps[winner.key].id}`)
                     ).catch(
                       err => {
                         rcon.disconnect();
