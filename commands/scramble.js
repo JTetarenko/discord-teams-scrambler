@@ -29,3 +29,7 @@ exports.scramble = async function(msg) {
       .setFooter(`Have Fun and Good Luck =]`));
   }
 };
+
+exports.help = function(process) {
+  return `Execute map voting based on how much members are in lobby`;
+}

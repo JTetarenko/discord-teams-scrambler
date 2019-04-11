@@ -5,8 +5,10 @@
   "author": "Hawkk2e",
   "license": "ISC",
   "dependencies": {
+    "change-case": "^3.1.0",
     "discord.js": "^11.4.2",
     "dotenv": "^7.0.0",
+    "parse-mrw-comments": "0.0.3",
     "randomstring": "^1.1.5",
     "shuffle-array": "^1.0.1",
     "srcds-rcon": "github:randunel/node-srcds-rcon"

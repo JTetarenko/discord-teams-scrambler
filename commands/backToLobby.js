@@ -18,3 +18,7 @@ exports.backToLobby = async function(msg) {
       .setColor(0xFF0000));
   }
 };
+
+exports.help = function(process) {
+  return `Move members to "${process.env.PRE_GAME_CHANNEL_NAME}" voice channel from "${process.env.TEAM_A_NAME}" and "${process.env.TEAM_B_NAME}"`;
+}

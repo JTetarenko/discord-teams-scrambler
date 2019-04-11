@@ -92,3 +92,7 @@ exports.voteMap = async function(msg) {
       .catch(console.error);
   }
 };
+
+exports.help = function(process) {
+  return `Scramble members who are in "${process.env.TEAM_A_NAME}", "${process.env.TEAM_B_NAME}" and "${process.env.PRE_GAME_CHANNEL_NAME}" voice channels`;
+}
