@@ -23,6 +23,8 @@ exports.setup = async function(gameMode, cfg, mapID) {
     }
   );
 
+  rcon.disconnect();
+
   return password;
 }
 
@@ -46,6 +48,8 @@ exports.getScore = async function() {
       rcon.disconnect();
     }
   );
+
+  rcon.disconnect();
 
   return scoreboard;
 }
