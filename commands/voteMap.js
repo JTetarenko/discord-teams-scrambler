@@ -1,7 +1,6 @@
 const Discord = require('discord.js');
 const configuration = require("../configuration");
 const server = require("../helpers/server");
-const util = require('util');
 
 exports.voteMap = async function(msg, client) {
   const adminRole = msg.member.roles.find(role => role.name === process.env.ADMIN_ROLE_NAME);
