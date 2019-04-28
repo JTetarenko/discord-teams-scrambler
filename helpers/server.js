@@ -45,11 +45,9 @@ exports.getScore = async function() {
     () => rcon.command("sm_teamscore CT").then((score) => scoreboard.ct = score.substr(0, score.indexOf('\n')))
   ).catch(
     err => {
-      rcon.disconnect();
+      console.log(err);
     }
   );
-
-  rcon.disconnect();
 
   return scoreboard;
 }
