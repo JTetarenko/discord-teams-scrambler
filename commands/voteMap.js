@@ -1,8 +1,9 @@
 const Discord = require('discord.js');
 const configuration = require("../configuration");
 const server = require("../helpers/server");
+const util = require('util');
 
-exports.voteMap = async function(msg) {
+exports.voteMap = async function(msg, client) {
   const adminRole = msg.member.roles.find(role => role.name === process.env.ADMIN_ROLE_NAME);
   const preGameChannel = msg.guild.channels.find(channel => channel.name === process.env.PRE_GAME_CHANNEL_NAME);
 
@@ -23,7 +24,9 @@ exports.voteMap = async function(msg) {
       .setFooter(`Voting time is ${configuration.modes[mode].time / 1000} seconds`)
       .setTimestamp();
 
-    msg.channel.send({embed})
+    let winner;
+
+    return msg.channel.send({embed})
       .then(async function (message) {
         // Add reactions to message
         let reactionArray = {};
@@ -31,13 +34,13 @@ exports.voteMap = async function(msg) {
           reactionArray[i] = await message.react(emojiList[i]);
         }
 
-        setTimeout(() => {
+        return setTimeout(() => {
           // Re-fetch the message and get reaction counts
           message.channel.fetchMessage(message.id)
             .then(async function (message) {
               let reactionCountsArray = [];
               for (let i = 0; i < configuration.modes[mode].maps.length; i++) {
-                reactionCountsArray[i] = message.reactions.get(emojiList[i]).count - 1;
+                reactionCountsArray[i] = await message.reactions.get(emojiList[i]).count - 1;
               }
 
               // Find winner
@@ -61,31 +64,52 @@ exports.voteMap = async function(msg) {
                 }
               }
 
-              const winner = winners.length > 1 ? winners[Math.floor(Math.random() * winners.length)] : winners[0];
+              winner = winners.length > 1 ? winners[Math.floor(Math.random() * winners.length)] : winners[0];
 
               embed.setImage(configuration.modes[mode].maps[winner.key].img);
               embed.setColor(0xFF0000);
               embed.addField("**Winner:**", `${emojiList[winner.key]} ${configuration.modes[mode].maps[winner.key].name} (${winner.value} vote(s))`);
               embed.setTimestamp();
 
-              message.edit("", embed);
+              await message.edit("", embed);
 
               // Setup CS server
               const password = await server.setup(configuration.modes[mode].gameMode, configuration.modes[mode].cfg,
-                configuration.modes[mode].maps[winner.key].id)
+                configuration.modes[mode].maps[winner.key].id);
 
-              preGameChannel.members.forEach((member) => {
+              await preGameChannel.members.forEach((member) => {
                 member.send(new Discord.RichEmbed()
-                  .setTitle("Pecinja.lv Friendly Scrim is ready")
-                  .setDescription(`
+                .setTitle("Pecinja.lv Friendly Scrim is ready")
+                .setDescription(`
                         ==============================================
                         
                         \`connect ${process.env.SERVER_ADDRESS};password ${password};\`
                         
                         ==============================================
                         `)
-                  .setFooter("Copy this in console"));
+                .setFooter("Copy this in console"));
               });
+
+              console.log("Server is done and starting score tracking...");
+
+              return {
+                interval: setInterval(async() => {
+                  const response = await server.getScore();
+
+                  console.log("Score:", response);
+
+                  if (response === "Warmup" || response === "Match ended") {
+                    client.user.setActivity(
+                      `${response} @${configuration.modes[mode].maps[winner.key].name}`,
+                      {type: "WATCHING"});
+                  }
+                  else {
+                    client.user.setActivity(
+                      `ALPHA: ${response.alpha} vs BRAVO: ${response.bravo} @${configuration.modes[mode].maps[winner.key].name}`,
+                      {type: "WATCHING"});
+                  }
+                }, 10 * 1000)
+              };
             });
         }, configuration.modes[mode].time);
       })

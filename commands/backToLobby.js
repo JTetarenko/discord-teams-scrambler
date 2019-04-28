@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 
-exports.backToLobby = async function(msg) {
+exports.backToLobby = function(msg, client, interval) {
   const adminRole = msg.member.roles.find(role => role.name === process.env.ADMIN_ROLE_NAME);
   const preGameChannel = msg.guild.channels.find(channel => channel.name === process.env.PRE_GAME_CHANNEL_NAME);
   const teamAChannel = msg.guild.channels.find(channel => channel.name === process.env.TEAM_A_NAME);
@@ -16,6 +16,14 @@ exports.backToLobby = async function(msg) {
     msg.channel.send(new Discord.RichEmbed()
       .setTitle("Hey hey! Game is over, let's talk :P")
       .setColor(0xFF0000));
+
+    clearInterval(interval);
+
+    client.user.setActivity("commands", { type: "LISTENING" });
+
+    return {
+      interval: false
+    }
   }
 };
 

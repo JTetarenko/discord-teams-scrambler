@@ -19,5 +19,3 @@ exports.buildCommands = function(msg, commands, process) {
 
   return commandsList;
 }
-
-

@@ -3,12 +3,14 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const commandsHelper = require('./helpers/commands');
 let { commands } = require('./commands');
+let interval = null;
 
 dotenv.config();
 
 // Create socket for Discord server
 client.on('ready', () => {
   console.log(`Let's go!`);
+  client.user.setActivity("commands", { type: "LISTENING" });
 });
 
 // Login into Bot profile
@@ -28,7 +30,10 @@ client.on('message', msg => {
     // Check if command exists
     if(Object.keys(commandsList).includes(commandName)) {
       // Execute command
-      commandsList[commandName](msg);
+      const response = commandsList[commandName](msg, client, interval);
+      if (response && response.hasOwnProperty("interval")) {
+        interval = response.interval ? response.interval : false;
+      }
     }
   }
 });
